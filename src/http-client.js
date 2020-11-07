@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 import zip from 'lodash.zipobject'
 
-import 'isomorphic-fetch'
+import axios from 'axios';
 
 const BASE = 'https://api.binance.com'
 const FUTURES = 'https://fapi.binance.com'
@@ -24,10 +24,12 @@ const makeQueryString = q =>
 const sendResult = call =>
   call.then(res => {
     // If response is ok, we can safely assume it is valid JSON
-    if (res.ok) {
-      return res.json()
+    if (res.status == 200) {
+      return Promise.resolve(res.data)
     }
 
+    throw res.data;
+    /*
     // Errors might come from the API itself or the proxy Binance is using.
     // For API errors the response will be valid JSON,but for proxy errors
     // it will be HTML
@@ -47,6 +49,7 @@ const sendResult = call =>
       }
       throw error
     })
+    */
   })
 
 /**
@@ -77,11 +80,11 @@ const checkParams = (name, payload, requires = []) => {
  */
 const publicCall = ({ endpoints }) => (path, data, method = 'GET', headers = {}) =>
   sendResult(
-    fetch(
-      `${!path.includes('/fapi') ? endpoints.base : endpoints.futures}${path}${makeQueryString(
-        data,
-      )}`,
+    axios(
       {
+        url: `${!path.includes('/fapi') ? endpoints.base : endpoints.futures}${path}${makeQueryString(
+          data,
+        )}`,
         method,
         json: true,
         headers,
@@ -263,7 +266,7 @@ export default opts => {
     dailyStats: payload => pubCall('/api/v3/ticker/24hr', payload),
     prices: payload =>
       pubCall('/api/v3/ticker/price', payload).then(r =>
-        r.reduce((out, cur) => ((out[cur.symbol] = cur.price), out), {}),
+        [r].reduce((out, cur) => ((out[cur.symbol] = cur.price), out), {}),
       ),
 
     avgPrice: payload => pubCall('/api/v3/avgPrice', payload),
