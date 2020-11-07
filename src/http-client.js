@@ -146,11 +146,11 @@ const privateCall = ({ apiKey, apiSecret, endpoints, getTime = defaultGetTime, p
     const newData = noExtra ? data : { ...data, timestamp, signature }
 
     return sendResult(
-      fetch(
-        `${!path.includes('/fapi') ? endpoints.base : endpoints.futures}${path}${
-          noData ? '' : makeQueryString(newData)
-        }`,
+      axios(
         {
+          url: `${!path.includes('/fapi') ? endpoints.base : endpoints.futures}${path}${
+            noData ? '' : makeQueryString(newData)
+          }`,
           method,
           headers: { 'X-MBX-APIKEY': apiKey },
           json: true,
